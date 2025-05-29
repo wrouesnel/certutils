@@ -3,10 +3,14 @@ package certutils
 import (
 	"crypto/x509"
 	"encoding/asn1"
+	"fmt"
+	"sort"
 )
 
 var extKeyUsageFromOID = map[string]x509.ExtKeyUsage{}
 var extKeyUsageToOID = map[x509.ExtKeyUsage]asn1.ObjectIdentifier{}
+var strToExtKeyUsage = map[string]x509.ExtKeyUsage{}
+var knownUsages = []string
 
 func init() {
 	extKeyUsageToOID[x509.ExtKeyUsageAny] = asn1.ObjectIdentifier{2, 5, 29, 37, 0}
@@ -23,6 +27,52 @@ func init() {
 	extKeyUsageToOID[x509.ExtKeyUsageNetscapeServerGatedCrypto] = asn1.ObjectIdentifier{2, 16, 840, 1, 113730, 4, 1}
 	extKeyUsageToOID[x509.ExtKeyUsageMicrosoftCommercialCodeSigning] = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 311, 2, 1, 22}
 	extKeyUsageToOID[x509.ExtKeyUsageMicrosoftKernelCodeSigning] = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 311, 61, 1, 1}
+
+	strToExtKeyUsage["Any"] = x509.ExtKeyUsageAny
+	strToExtKeyUsage["ServerAuth"] = x509.ExtKeyUsageServerAuth
+	strToExtKeyUsage["ClientAuth"] = x509.ExtKeyUsageClientAuth
+	strToExtKeyUsage["CodeSigning"] = x509.ExtKeyUsageCodeSigning
+	strToExtKeyUsage["EmailProtection"] = x509.ExtKeyUsageEmailProtection
+	strToExtKeyUsage["IPSECEndSystem"] = x509.ExtKeyUsageIPSECEndSystem
+	strToExtKeyUsage["IPSECTunnel"] = x509.ExtKeyUsageIPSECTunnel
+	strToExtKeyUsage["IPSECUser"] = x509.ExtKeyUsageIPSECUser
+	strToExtKeyUsage["TimeStamping"] = x509.ExtKeyUsageTimeStamping
+	strToExtKeyUsage["OCSPSigning"] = x509.ExtKeyUsageOCSPSigning
+	strToExtKeyUsage["MicrosoftServerGatedCrypto"] = x509.ExtKeyUsageMicrosoftServerGatedCrypto
+	strToExtKeyUsage["NetscapeServerGatedCrypto"] = x509.ExtKeyUsageNetscapeServerGatedCrypto
+	strToExtKeyUsage["MicrosoftCommercialCodeSigning"] = x509.ExtKeyUsageMicrosoftCommercialCodeSigning
+	strToExtKeyUsage["MicrosoftKernelCodeSigning"] = x509.ExtKeyUsageMicrosoftKernelCodeSigning
+
+	knownUsages = []string{
+		"Any",
+		"ServerAuth",
+		"ClientAuth",
+		"CodeSigning",
+		"EmailProtection",
+		"IPSECEndSystem",
+		"IPSECTunnel",
+		"IPSECUser",
+		"TimeStamping",
+		"OCSPSigning",
+		"MicrosoftServerGatedCrypto",
+		"NetscapeServerGatedCrypto",
+		"MicrosoftCommercialCodeSigning",
+		"MicrosoftKernelCodeSigning",
+	}
+}
+
+// ParseExtKeyUsage parses a string representation of extended key usage to the type.
+func ParseExtKeyUsage(s string) (x509.ExtKeyUsage, error) {
+	usage, found := strToExtKeyUsage[s]
+	if !found {
+		return -1, fmt.Errorf("unknown key usage: %s", s)
+	}
+	return usage, nil
+}
+
+// ListExtKeyUsage outputs the list of known extended key usages as strings
+func ListExtKeyUsage() []string {
+	return knownUsages[:]
 }
 
 // ExtKeyUsageToOid is a helper to convert Golang x509 ExtKeyUsages to OIDs
