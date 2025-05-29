@@ -4,13 +4,16 @@ import (
 	"crypto/x509"
 	"encoding/asn1"
 	"fmt"
-	"sort"
 )
 
 var extKeyUsageFromOID = map[string]x509.ExtKeyUsage{}
 var extKeyUsageToOID = map[x509.ExtKeyUsage]asn1.ObjectIdentifier{}
+
+var strToKeyUsage = map[string]x509.KeyUsage{}
+var knownUsages = []string{}
+
 var strToExtKeyUsage = map[string]x509.ExtKeyUsage{}
-var knownUsages = []string
+var knownExtUsages = []string{}
 
 func init() {
 	extKeyUsageToOID[x509.ExtKeyUsageAny] = asn1.ObjectIdentifier{2, 5, 29, 37, 0}
@@ -28,6 +31,28 @@ func init() {
 	extKeyUsageToOID[x509.ExtKeyUsageMicrosoftCommercialCodeSigning] = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 311, 2, 1, 22}
 	extKeyUsageToOID[x509.ExtKeyUsageMicrosoftKernelCodeSigning] = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 311, 61, 1, 1}
 
+	strToKeyUsage["DigitalSignature"] = x509.KeyUsageDigitalSignature
+	strToKeyUsage["ContentCommitment"] = x509.KeyUsageContentCommitment
+	strToKeyUsage["KeyEncipherment"] = x509.KeyUsageKeyEncipherment
+	strToKeyUsage["DataEncipherment"] = x509.KeyUsageDataEncipherment
+	strToKeyUsage["KeyAgreement"] = x509.KeyUsageKeyAgreement
+	strToKeyUsage["CertSign"] = x509.KeyUsageCertSign
+	strToKeyUsage["CRLSign"] = x509.KeyUsageCRLSign
+	strToKeyUsage["EncipherOnly"] = x509.KeyUsageEncipherOnly
+	strToKeyUsage["DecipherOnly"] = x509.KeyUsageDecipherOnly
+
+	knownUsages = []string{
+		"DigitalSignature",
+		"ContentCommitment",
+		"KeyEncipherment",
+		"DataEncipherment",
+		"KeyAgreement",
+		"CertSign",
+		"CRLSign",
+		"EncipherOnly",
+		"DecipherOnly",
+	}
+
 	strToExtKeyUsage["Any"] = x509.ExtKeyUsageAny
 	strToExtKeyUsage["ServerAuth"] = x509.ExtKeyUsageServerAuth
 	strToExtKeyUsage["ClientAuth"] = x509.ExtKeyUsageClientAuth
@@ -43,7 +68,7 @@ func init() {
 	strToExtKeyUsage["MicrosoftCommercialCodeSigning"] = x509.ExtKeyUsageMicrosoftCommercialCodeSigning
 	strToExtKeyUsage["MicrosoftKernelCodeSigning"] = x509.ExtKeyUsageMicrosoftKernelCodeSigning
 
-	knownUsages = []string{
+	knownExtUsages = []string{
 		"Any",
 		"ServerAuth",
 		"ClientAuth",
@@ -61,6 +86,20 @@ func init() {
 	}
 }
 
+// ParseKeyUsage parses a string representation of extended key usage to the type.
+func ParseKeyUsage(s string) (x509.KeyUsage, error) {
+	usage, found := strToKeyUsage[s]
+	if !found {
+		return -1, fmt.Errorf("unknown key usage: %s", s)
+	}
+	return usage, nil
+}
+
+// ListExtKeyUsage outputs the list of known extended key usages as strings
+func ListKeyUsage() []string {
+	return knownUsages[:]
+}
+
 // ParseExtKeyUsage parses a string representation of extended key usage to the type.
 func ParseExtKeyUsage(s string) (x509.ExtKeyUsage, error) {
 	usage, found := strToExtKeyUsage[s]
@@ -72,7 +111,7 @@ func ParseExtKeyUsage(s string) (x509.ExtKeyUsage, error) {
 
 // ListExtKeyUsage outputs the list of known extended key usages as strings
 func ListExtKeyUsage() []string {
-	return knownUsages[:]
+	return knownExtUsages[:]
 }
 
 // ExtKeyUsageToOid is a helper to convert Golang x509 ExtKeyUsages to OIDs
