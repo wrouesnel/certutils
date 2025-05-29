@@ -16,9 +16,10 @@ var ErrUnknownTypeForKey = errors.New("unknown type for encoding key")
 
 const (
 	// CertificateBlockType is a possible value for pem.Block.Type.
-	CertificateBlockType = "CERTIFICATE"
-	RSAKeyBlockType      = "RSA PRIVATE KEY"
-	ECKeyBlockType       = "EC PRIVATE KEY"
+	CertificateBlockType        = "CERTIFICATE"
+	RSAKeyBlockType             = "RSA PRIVATE KEY"
+	ECKeyBlockType              = "EC PRIVATE KEY"
+	CertificateRequestBlockType = "CERTIFICATE REQUEST"
 )
 
 // LoadCertificatesFromPem will read 1 or more PEM encoded x509 certificates
@@ -121,6 +122,18 @@ func EncodeKeys(keys ...interface{}) ([]byte, error) {
 		keyBytes := pem.EncodeToMemory(blockType)
 		if _, err := b.Write(keyBytes); err != nil {
 			return nil, err
+		}
+	}
+	return b.Bytes(), nil
+}
+
+// EncodeCertificates returns the PEM-encoded byte array that represents by the specified certs.
+// https://github.com/kubernetes/client-go/blob/master/util/cert/pem.go
+func EncodeRequest(csrs ...*x509.CertificateRequest) ([]byte, error) {
+	b := bytes.Buffer{}
+	for _, csr := range csrs {
+		if err := pem.Encode(&b, &pem.Block{Type: CertificateRequestBlockType, Bytes: csr.Raw}); err != nil {
+			return []byte{}, err
 		}
 	}
 	return b.Bytes(), nil
