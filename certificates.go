@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
+	"errors"
 	extasn1 "github.com/paulgriffiths/pki/asn1"
 	"github.com/paulgriffiths/pki/extensions"
 	"math/big"
@@ -43,7 +44,7 @@ func CertificateNotAfter(duration time.Duration, authorities ...*x509.Certificat
 			proposedTime = authority.NotAfter
 		}
 	}
-	
+
 	return proposedTime
 }
 
@@ -58,7 +59,7 @@ func CACertificateNotAfter(duration time.Duration) time.Time {
 
 // GenerateCSR generates a certificate for the given hosts.
 // Parameters are common template parameters, key is the private key associated with the certificate.
-func GenerateCSR(subject pkix.Name, parameters CSRParameters, key interface{}, hosts ...string) *x509.CertificateRequest {
+func GenerateCSR(subject pkix.Name, parameters CSRParameters, key interface{}, hosts ...string) (*x509.CertificateRequest, error) {
 	// Put the correct
 	basicConstraints, _ := extensions.BasicConstraints{
 		Critical:   true,
@@ -121,15 +122,15 @@ func GenerateCSR(subject pkix.Name, parameters CSRParameters, key interface{}, h
 
 	signedCSRBytes, err := x509.CreateCertificateRequest(rand.Reader, &csr, key)
 	if err != nil {
-		return nil
+		return nil, errors.Join(errors.New("error creating certificate request"), err)
 	}
 
 	signedCSR, err := x509.ParseCertificateRequest(signedCSRBytes)
 	if err != nil {
-		return nil
+		return nil, errors.Join(errors.New("error parsing certificate request"), err)
 	}
 
-	return signedCSR
+	return signedCSR, nil
 }
 
 // CSRParameters sets parameters for generating a CSR
@@ -243,10 +244,16 @@ func RequestTLSCertificate(authority *x509.Certificate, authorityKey interface{}
 		KeyUsage:    x509.KeyUsageDigitalSignature,
 		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 	}
-	csr := GenerateCSR(subject, csrParams, key, hosts...)
+	csr, err := GenerateCSR(subject, csrParams, key, hosts...)
+	if err != nil {
+		return nil
+	}
 
 	// Sign the CSR
 	certificate, err := SignCertificate(csr, authority, authorityKey, parameters)
+	if err != nil {
+		return nil
+	}
 	return &tls.Certificate{
 		Certificate: [][]byte{certificate.Raw, authority.Raw},
 		PrivateKey:  key,
