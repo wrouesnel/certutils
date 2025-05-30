@@ -11,7 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ErrCouldParsePemCertificateBytes = errors.New("Could not parse bytes as PEM certificate")
+var ErrCouldNotParsePemCertificateSigningRequestBytes = errors.New("Could not parse bytes as PEM certificate signing request")
+var ErrCouldNotParsePemCertificateBytes = errors.New("Could not parse bytes as PEM certificate")
 var ErrUnknownTypeForKey = errors.New("unknown type for encoding key")
 
 const (
@@ -40,13 +41,40 @@ func LoadCertificatesFromPem(pemCerts []byte) ([]*x509.Certificate, error) {
 		certBytes := block.Bytes
 		cert, err := x509.ParseCertificate(certBytes)
 		if err != nil {
-			return certs, errors.Wrapf(ErrCouldParsePemCertificateBytes, "error on block %v", idx)
+			return certs, errors.Wrapf(ErrCouldNotParsePemCertificateBytes, "error on block %v", idx)
 		}
 
 		certs = append(certs, cert)
 		idx++
 	}
 	return certs, nil
+}
+
+// LoadRequestsFromPem will read 1 or more PEM encoded certificate signing requests
+func LoadRequestsFromPem(pemRequests []byte) ([]*x509.CertificateRequest, error) {
+	idx := 0
+	csrs := make([]*x509.CertificateRequest, 0)
+	for len(pemRequests) > 0 {
+		var block *pem.Block
+		block, pemRequests = pem.Decode(pemRequests)
+		if block == nil {
+			break
+		}
+		if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
+			idx++
+			continue
+		}
+
+		csrBytes := block.Bytes
+		csr, err := x509.ParseCertificateRequest(csrBytes)
+		if err != nil {
+			return csrs, errors.Wrapf(ErrCouldNotParsePemCertificateSigningRequestBytes, "error on block %v", idx)
+		}
+
+		csrs = append(csrs, csr)
+		idx++
+	}
+	return csrs, nil
 }
 
 // LoadPrivateKeysFromPem will read 1 or more PEM encoded private keys
@@ -73,7 +101,7 @@ func LoadPrivateKeysFromPem(pemKeys []byte) ([]interface{}, error) {
 		}
 
 		if err != nil {
-			return keys, errors.Wrapf(ErrCouldParsePemCertificateBytes, "error on block %v", idx)
+			return keys, errors.Wrapf(ErrCouldNotParsePemCertificateBytes, "error on block %v", idx)
 		}
 
 		keys = append(keys, key)
