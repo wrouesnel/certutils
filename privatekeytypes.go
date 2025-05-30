@@ -1,4 +1,4 @@
-//go:generate go tool go-enum --lower
+//go:generate go tool go-enum --lower --names
 package certutils
 
 import (

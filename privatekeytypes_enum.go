@@ -7,8 +7,8 @@
 package certutils
 
 import (
-	"errors"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -26,7 +26,23 @@ const (
 	PrivateKeyTypeEcp521 PrivateKeyType = "ecp521"
 )
 
-var ErrInvalidPrivateKeyType = errors.New("not a valid PrivateKeyType")
+var ErrInvalidPrivateKeyType = fmt.Errorf("not a valid PrivateKeyType, try [%s]", strings.Join(_PrivateKeyTypeNames, ", "))
+
+var _PrivateKeyTypeNames = []string{
+	string(PrivateKeyTypeRsa2048),
+	string(PrivateKeyTypeRsa3076),
+	string(PrivateKeyTypeRsa4096),
+	string(PrivateKeyTypeEcp256),
+	string(PrivateKeyTypeEcp384),
+	string(PrivateKeyTypeEcp521),
+}
+
+// PrivateKeyTypeNames returns a list of possible string values of PrivateKeyType.
+func PrivateKeyTypeNames() []string {
+	tmp := make([]string, len(_PrivateKeyTypeNames))
+	copy(tmp, _PrivateKeyTypeNames)
+	return tmp
+}
 
 // String implements the Stringer interface.
 func (x PrivateKeyType) String() string {
