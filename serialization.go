@@ -33,7 +33,7 @@ func LoadCertificatesFromPem(pemCerts []byte) ([]*x509.Certificate, error) {
 		if block == nil {
 			break
 		}
-		if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
+		if block.Type != CertificateBlockType || len(block.Headers) != 0 {
 			idx++
 			continue
 		}
@@ -60,7 +60,7 @@ func LoadRequestsFromPem(pemRequests []byte) ([]*x509.CertificateRequest, error)
 		if block == nil {
 			break
 		}
-		if block.Type != "CERTIFICATE" || len(block.Headers) != 0 {
+		if block.Type != CertificateRequestBlockType || len(block.Headers) != 0 {
 			idx++
 			continue
 		}
