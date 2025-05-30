@@ -220,9 +220,8 @@ func SignCertificate(csr *x509.CertificateRequest, authority *x509.Certificate, 
 
 // RequestTLSCertificate generates and signs a certificate for the given hostname using defaults derived from the
 // CA certificate. The returns *tls.Certificate contains the private key of the generated certificate.
-func RequestTLSCertificate(authority *x509.Certificate, authorityKey interface{},
-	parameters SigningParameters, keyType PrivateKeyType, hosts ...string) *tls.Certificate {
-
+func RequestTLSCertificateWithUsages(authority *x509.Certificate, authorityKey interface{},
+	parameters SigningParameters, keyType PrivateKeyType, usage x509.KeyUsage, extUsage []x509.ExtKeyUsage, isCA bool, hosts ...string) *tls.Certificate {
 	if len(hosts) == 0 {
 		return nil
 	}
@@ -241,8 +240,9 @@ func RequestTLSCertificate(authority *x509.Certificate, authorityKey interface{}
 
 	// Request the CSR
 	csrParams := CSRParameters{
-		KeyUsage:    x509.KeyUsageDigitalSignature,
-		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		KeyUsage:    usage,
+		ExtKeyUsage: extUsage,
+		IsCA:        isCA,
 	}
 	csr, err := GenerateCSR(subject, csrParams, key, hosts...)
 	if err != nil {
@@ -259,4 +259,17 @@ func RequestTLSCertificate(authority *x509.Certificate, authorityKey interface{}
 		PrivateKey:  key,
 		Leaf:        certificate,
 	}
+}
+
+// RequestTLSCertificate generates and signs a certificate for the given hostname using defaults derived from the
+// CA certificate. The returns *tls.Certificate contains the private key of the generated certificate. This will be a
+// server certificate suitable for typical host verification.
+func RequestTLSCertificate(authority *x509.Certificate, authorityKey interface{},
+	parameters SigningParameters, keyType PrivateKeyType, hosts ...string) *tls.Certificate {
+
+	if len(hosts) == 0 {
+		return nil
+	}
+
+	return RequestTLSCertificateWithUsages(authority, authorityKey, parameters, keyType, x509.KeyUsageDigitalSignature, []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth}, false, hosts...)
 }
