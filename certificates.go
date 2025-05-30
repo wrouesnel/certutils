@@ -64,7 +64,7 @@ func GenerateCSR(subject pkix.Name, parameters CSRParameters, key interface{}, h
 	basicConstraints, _ := extensions.BasicConstraints{
 		Critical:   true,
 		IsCA:       parameters.IsCA,
-		MaxPathLen: 0,
+		MaxPathLen: parameters.MaxPathLen,
 	}.Marshal()
 
 	keyUsage, _ := extensions.KeyUsage{
@@ -138,6 +138,7 @@ type CSRParameters struct {
 	KeyUsage    x509.KeyUsage
 	ExtKeyUsage []x509.ExtKeyUsage
 	IsCA        bool
+	MaxPathLen  int
 }
 
 // SigningParameters sets parameters determined by the authority signing
