@@ -90,6 +90,13 @@ func GenerateCSR(subject pkix.Name, parameters CSRParameters, key interface{}, h
 		extraExtensions = append(extraExtensions, extUsages)
 	}
 
+	if parameters.CertificateTemplate != "" {
+		certificateTemplate, _ := CertificateTypeExtension{
+			Name: parameters.CertificateTemplate,
+		}.Marshal()
+		extraExtensions = append(extraExtensions, certificateTemplate)
+	}
+
 	csr := x509.CertificateRequest{
 		Subject:         subject,
 		ExtraExtensions: extraExtensions,
@@ -139,6 +146,9 @@ type CSRParameters struct {
 	ExtKeyUsage []x509.ExtKeyUsage
 	IsCA        bool
 	MaxPathLen  int
+	// This parameter is used by some CAs (i.e. ADCS) to determine which template
+	// to apply. So we should support it.
+	CertificateTemplate string
 }
 
 // SigningParameters sets parameters determined by the authority signing
