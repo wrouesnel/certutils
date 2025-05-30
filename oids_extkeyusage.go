@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"encoding/asn1"
 	"fmt"
+	"strings"
 )
 
 var extKeyUsageFromOID = map[string]x509.ExtKeyUsage{}
@@ -84,6 +85,39 @@ func init() {
 		"MicrosoftCommercialCodeSigning",
 		"MicrosoftKernelCodeSigning",
 	}
+
+	// Setup the lower case lookup tables
+	for _, value := range ListKeyUsage() {
+		strToKeyUsage[strings.ToLower(value)] = strToKeyUsage[value]
+	}
+
+	for _, value := range ListExtKeyUsage() {
+		strToExtKeyUsage[strings.ToLower(value)] = strToExtKeyUsage[value]
+	}
+}
+
+type X509KeyUsage struct {
+	x509.KeyUsage
+}
+
+func (x *X509KeyUsage) UnmarshalText(text []byte) (err error) {
+	s := strings.TrimSpace(string(text))
+	var v x509.KeyUsage
+	v, err = ParseKeyUsage(s)
+	x.KeyUsage = v
+	return
+}
+
+type X509ExtKeyUsage struct {
+	x509.ExtKeyUsage
+}
+
+func (x *X509ExtKeyUsage) UnmarshalText(text []byte) (err error) {
+	s := strings.TrimSpace(string(text))
+	var v x509.ExtKeyUsage
+	v, err = ParseExtKeyUsage(s)
+	x.ExtKeyUsage = v
+	return
 }
 
 // ParseKeyUsage parses a string representation of extended key usage to the type.
