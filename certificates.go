@@ -147,8 +147,8 @@ type SigningParameters struct {
 	NotAfter     time.Time
 }
 
-// csrToCertificate
-func csrToCertificate(csr *x509.CertificateRequest, parameters SigningParameters) *x509.Certificate {
+// CsrToCertificateTemplate converts a certificate signing request to a certificate template ready to be signed.
+func CsrToCertificateTemplate(csr *x509.CertificateRequest, parameters SigningParameters) *x509.Certificate {
 	certificate := &x509.Certificate{
 		SerialNumber:       big.NewInt(parameters.SerialNumber),
 		SignatureAlgorithm: csr.SignatureAlgorithm,
@@ -199,7 +199,7 @@ func csrToCertificate(csr *x509.CertificateRequest, parameters SigningParameters
 
 // SignCertificate signs a CSR for use as a TLS server certificate
 func SignCertificate(csr *x509.CertificateRequest, authority *x509.Certificate, authorityKey interface{}, parameters SigningParameters) (*x509.Certificate, error) {
-	certificate := csrToCertificate(csr, parameters)
+	certificate := CsrToCertificateTemplate(csr, parameters)
 
 	if authority == nil {
 		authority = certificate
