@@ -20,6 +20,7 @@ const (
 	CertificateBlockType        = "CERTIFICATE"
 	RSAKeyBlockType             = "RSA PRIVATE KEY"
 	ECKeyBlockType              = "EC PRIVATE KEY"
+	PrivateKeyBlockType         = "PRIVATE KEY"
 	CertificateRequestBlockType = "CERTIFICATE REQUEST"
 )
 
@@ -95,6 +96,8 @@ func LoadPrivateKeysFromPem(pemKeys []byte) ([]interface{}, error) {
 			key, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 		case ECKeyBlockType:
 			key, err = x509.ParseECPrivateKey(block.Bytes)
+		case PrivateKeyBlockType:
+			key, err = x509.ParsePKCS8PrivateKey(block.Bytes)
 		default:
 			idx++
 			continue
